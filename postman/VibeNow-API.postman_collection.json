@@ -1,0 +1,694 @@
+{
+  "info": {
+    "name": "VibeNow API",
+    "description": "Auth (login + refresh), Users, Establishments, Feedbacks, Menu, Quotes e Events Schedule.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3004" },
+    { "key": "token", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "menuId", "value": "1" },
+    { "key": "menuItemId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.accessToken) {",
+                  "    pm.collectionVariables.set('token', json.accessToken);",
+                  "  }",
+                  "  if (json.refreshToken) {",
+                  "    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+5511999999999\",\n  \"password\": \"12345678\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Público. Retorna accessToken, refreshToken, expiresIn, tokenType. Salva token e refreshToken nas variáveis da collection."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.accessToken) {",
+                  "    pm.collectionVariables.set('token', json.accessToken);",
+                  "  }",
+                  "  if (json.refreshToken) {",
+                  "    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/refresh",
+            "description": "Público. Body com refreshToken (use a variável {{refreshToken}} após o Login). Devolve novo par access + refresh."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"phone\": \"+5511988887777\",\n  \"password\": \"12345678\",\n  \"email\": \"joao@email.com\"\n}"
+            },
+            "url": "{{baseUrl}}/users",
+            "description": "Rota pública."
+          }
+        },
+        {
+          "name": "Get Me (perfil)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/users/me",
+            "description": "Usuário logado (Bearer access token)."
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/users",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/users/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva Atualizado\"\n}"
+            },
+            "url": "{{baseUrl}}/users/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/users/1",
+            "description": "Requer autenticação."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Establishments",
+      "item": [
+        {
+          "name": "Create Establishment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lounge Exemplo\",\n  \"cnpj\": \"12345678000199\",\n  \"address\": \"Rua Exemplo, 100\",\n  \"city\": \"Canoas\",\n  \"state\": \"RS\",\n  \"zipCode\": \"92020000\",\n  \"phone\": \"+551133334444\",\n  \"email\": \"contato@lounge.com\",\n  \"instagram\": \"@loungeexemplo\",\n  \"establishmentType\": \"LOUNGE\",\n  \"latitude\": -29.9178,\n  \"longitude\": -51.1836,\n  \"openingHours\": {\n    \"friday\": { \"open\": \"19:00\", \"close\": \"02:00\" },\n    \"saturday\": { \"open\": \"19:00\", \"close\": \"02:00\" },\n    \"sunday\": null\n  }\n}"
+            },
+            "url": "{{baseUrl}}/establishments",
+            "description": "establishmentType: LOUNGE ou PARTY. openingHours opcional (chaves monday..sunday)."
+          }
+        },
+        {
+          "name": "List Establishments",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/establishments",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "List Near (mapa)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/establishments/near?lat=-29.9178&lng=-51.1836&radiusKm=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["establishments", "near"],
+              "query": [
+                { "key": "lat", "value": "-29.9178" },
+                { "key": "lng", "value": "-51.1836" },
+                { "key": "radiusKm", "value": "10" }
+              ]
+            },
+            "description": "Estabelecimentos próximos. radiusKm opcional (default 10)."
+          }
+        },
+        {
+          "name": "Map bounds (área visível)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/establishments/map-bounds?swLat=-29.95&swLng=-51.22&neLat=-29.88&neLng=-51.15&centerLat=-29.9178&centerLng=-51.1836&limit=120",
+              "host": ["{{baseUrl}}"],
+              "path": ["establishments", "map-bounds"],
+              "query": [
+                { "key": "swLat", "value": "-29.95" },
+                { "key": "swLng", "value": "-51.22" },
+                { "key": "neLat", "value": "-29.88" },
+                { "key": "neLng", "value": "-51.15" },
+                { "key": "centerLat", "value": "-29.9178" },
+                { "key": "centerLng", "value": "-51.1836" },
+                { "key": "limit", "value": "120" }
+              ]
+            },
+            "description": "Só pins dentro do retângulo (mapa). centerLat/Lng opcionais: ordena por distância e retorna distanceKm. limit 1–250 (default 120). Zoom muito aberto: máx. 8° de largura/altura."
+          }
+        },
+        {
+          "name": "Get Establishment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/establishments/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Update Establishment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lounge Exemplo Atualizado\"\n}"
+            },
+            "url": "{{baseUrl}}/establishments/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Delete Establishment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/establishments/1",
+            "description": "Requer autenticação."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedbacks",
+      "item": [
+        {
+          "name": "Create Feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"establishmentId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Ambiente ótimo!\",\n  \"photoUrl\": \"https://exemplo.com/foto.jpg\"\n}"
+            },
+            "url": "{{baseUrl}}/feedbacks",
+            "description": "userId vem do token. 1 feedback por usuário/estabelecimento/dia."
+          }
+        },
+        {
+          "name": "List All Feedbacks",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/feedbacks",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "List Feedbacks by Establishment",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/feedbacks/establishment/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Get Feedback by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/feedbacks/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Update Feedback",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Comentário atualizado\"\n}"
+            },
+            "url": "{{baseUrl}}/feedbacks/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Delete Feedback",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/feedbacks/1",
+            "description": "Requer autenticação."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Menu",
+      "item": [
+        {
+          "name": "Create Menu (com itens opcionais)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"establishmentId\": 1,\n  \"items\": [\n    {\n      \"name\": \"Caipirinha\",\n      \"description\": \"Limão e cachaça\",\n      \"photoMenuItem\": \"https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400\",\n      \"price\": 25.9,\n      \"type\": \"ALCOHOLIC_DRINK\"\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/menu",
+            "description": "Um menu por estabelecimento. types: ALCOHOLIC_DRINK, NON_ALCOHOLIC_DRINK, COMBO, BOTTLE, FOOD, HOOKAH."
+          }
+        },
+        {
+          "name": "Get Menu by Establishment",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/menu/establishment/1",
+            "description": "Menu + items. null se não houver cardápio."
+          }
+        },
+        {
+          "name": "Get Menu by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/menu/{{menuId}}",
+            "description": "Variável menuId (default 1)."
+          }
+        },
+        {
+          "name": "Delete Menu",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/menu/{{menuId}}",
+            "description": "Remove menu e itens (cascade)."
+          }
+        },
+        {
+          "name": "Add Menu Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Refrigerante\",\n  \"price\": 8,\n  \"type\": \"NON_ALCOHOLIC_DRINK\"\n}"
+            },
+            "url": "{{baseUrl}}/menu/{{menuId}}/items",
+            "description": "Adiciona item ao menu {{menuId}}."
+          }
+        },
+        {
+          "name": "Update Menu Item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 9.5,\n  \"name\": \"Refrigerante lata\"\n}"
+            },
+            "url": "{{baseUrl}}/menu/{{menuId}}/items/{{menuItemId}}",
+            "description": "Atualiza item. Ajuste menuId e menuItemId nas variáveis."
+          }
+        },
+        {
+          "name": "Delete Menu Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/menu/{{menuId}}/items/{{menuItemId}}",
+            "description": "Remove item do menu."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quotes",
+      "item": [
+        {
+          "name": "Create Quote",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"establishmentId\": 1,\n  \"text\": \"Hoje happy hour 2x1 até 20h!\"\n}"
+            },
+            "url": "{{baseUrl}}/quotes",
+            "description": "Frase até 80 caracteres. Válida 12h a partir da criação."
+          }
+        },
+        {
+          "name": "List Active Quotes (estabelecimento)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/quotes/establishment/1/active",
+            "description": "Só quotes não expiradas (app)."
+          }
+        },
+        {
+          "name": "List All Quotes (estabelecimento)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/quotes/establishment/1",
+            "description": "Todas as quotes do estabelecimento (inclui expiradas)."
+          }
+        },
+        {
+          "name": "Get Quote by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/quotes/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Update Quote",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Texto atualizado até 80 chars\"\n}"
+            },
+            "url": "{{baseUrl}}/quotes/1",
+            "description": "Requer autenticação."
+          }
+        },
+        {
+          "name": "Delete Quote",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/quotes/1",
+            "description": "Requer autenticação."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events Schedule",
+      "item": [
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"establishmentId\": 1,\n  \"name\": \"Noite do Samba\",\n  \"description\": \"Especial de verão\",\n  \"attractions\": \"Banda XYZ\\nShow de luzes\",\n  \"dj\": \"DJ Silva\",\n  \"priceInfo\": \"Entrada R$ 40 | VIP R$ 120 | Mesa 6 pessoas R$ 600\",\n  \"eventStartsAt\": \"2026-04-15T22:00:00.000Z\",\n  \"eventEndsAt\": \"2026-04-16T04:00:00.000Z\",\n  \"listType\": \"FRIEND_LIST\",\n  \"posterImageUrl\": \"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600\",\n  \"offersTableReservation\": true,\n  \"tablePeopleCapacity\": 6,\n  \"tablesAvailable\": 12,\n  \"offersBoothReservation\": true,\n  \"boothPeopleCapacity\": 10,\n  \"boothsAvailable\": 4,\n  \"tablePrice\": 134.23,\n  \"boothPrice\": 899.99\n}"
+            },
+            "url": "{{baseUrl}}/events-schedule",
+            "description": "Reservas: mesa exige tablePeopleCapacity, tablesAvailable, tablePrice (decimal); camarote exige boothPeopleCapacity, boothsAvailable, boothPrice. Preços 0.01–999999.99."
+          }
+        },
+        {
+          "name": "Upcoming (todos estabelecimentos)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events-schedule/upcoming?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["events-schedule", "upcoming"],
+              "query": [{ "key": "limit", "value": "50" }]
+            },
+            "description": "Feed de próximos eventos. limit opcional (max 200)."
+          }
+        },
+        {
+          "name": "Upcoming por estabelecimento",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/establishment/1/upcoming",
+            "description": "Só eventos com início >= agora, ordem cronológica."
+          }
+        },
+        {
+          "name": "Todos eventos do estabelecimento",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/establishment/1",
+            "description": "Passados e futuros, mais recentes primeiro."
+          }
+        },
+        {
+          "name": "Minhas inscrições (eventos)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/registrations/me",
+            "description": "Lista eventos em que o usuário logado está inscrito."
+          }
+        },
+        {
+          "name": "Contagem de inscritos no evento",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/1/registrations/count",
+            "description": "Retorno: { count }. Altere o id do evento na URL."
+          }
+        },
+        {
+          "name": "Status da minha inscrição no evento",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/1/registrations/me",
+            "description": "Retorno: { registered, registeredAt }. Altere o id do evento."
+          }
+        },
+        {
+          "name": "Inscrever-se no evento",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/1/register",
+            "description": "Sem body. Evento deve ser futuro; uma inscrição por usuário."
+          }
+        },
+        {
+          "name": "Cancelar inscrição no evento",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/1/register",
+            "description": "Remove a inscrição do usuário logado."
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/1",
+            "description": "Detalhe do evento."
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Noite do Samba — edição especial\"\n}"
+            },
+            "url": "{{baseUrl}}/events-schedule/1",
+            "description": "Campos parciais."
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/events-schedule/1",
+            "description": "Remove evento."
+          }
+        }
+      ]
+    }
+  ]
+}

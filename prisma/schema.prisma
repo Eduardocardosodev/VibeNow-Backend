@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstablishmentType {
+  LOUNGE
+  PARTY
+}
+
+/** Tipo de lista / entrada do evento */
+enum EventListType {
+  GENERAL      // entrada normal
+  FREE_LIST    // lista free
+  FRIEND_LIST  // lista amiga
+  VIP
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?   @unique
+  phone     String    @unique 
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feedbacks          Feedback[]
+  eventRegistrations EventRegistration[]
+
+  @@map("users")
+}
+
+model Establishment {
+  id        Int      @id @default(autoincrement())
+  name      String
+  cnpj      String   @unique
+  address   String
+  city      String
+  state     String
+  zipCode   String
+  phone     String
+  email     String   @unique
+  instagram String   @unique
+  establishmentType EstablishmentType
+  profilePhoto String?
+  latitude      Float
+  longitude     Float
+  score         Float
+  openingHours  Json?   // horário por dia: { "monday": { "open": "18:00", "close": "02:00" }, "sunday": null }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  feedbacks       Feedback[]
+  menu            Menu?
+  quotes          Quote[]
+  scheduledEvents ScheduledEvent[]
+
+  @@index([latitude, longitude])
+  @@map("establishments")
+}
+
+model ScheduledEvent {
+  id              Int      @id @default(autoincrement())
+  establishmentId Int
+  name            String   @db.VarChar(160)
+  description     String?  @db.VarChar(2000)
+  attractions     String?  @db.VarChar(2000) // atrações (texto; pode usar linhas)
+  dj              String?  @db.VarChar(160)
+  priceInfo       String?  @db.VarChar(500) // preços em texto livre (ex.: "Entrada R$ 30 | VIP R$ 100")
+  eventStartsAt   DateTime // início do evento (data + hora)
+  eventEndsAt     DateTime? // fim opcional
+  listType        EventListType @default(GENERAL)
+  posterImageUrl  String?  @db.VarChar(500)
+  /** Reserva de mesa: disponível no evento e capacidade (pessoas por mesa). */
+  offersTableReservation Boolean  @default(false)
+  tablePeopleCapacity    Int?
+  /** Quantidade de mesas disponíveis para reserva neste evento. */
+  tablesAvailable        Int?
+  /** Valor da reserva de mesa (por mesa), ex.: 134.23 */
+  tablePrice             Decimal? @db.Decimal(10, 2)
+  /** Reserva de camarote: disponível e capacidade (pessoas por camarote). */
+  offersBoothReservation Boolean  @default(false)
+  boothPeopleCapacity    Int?
+  /** Quantidade de camarotes disponíveis para reserva neste evento. */
+  boothsAvailable        Int?
+  /** Valor da reserva de camarote (por camarote), ex.: 134.23 */
+  boothPrice             Decimal? @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  establishment   Establishment        @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  registrations   EventRegistration[]
+
+  @@index([establishmentId, eventStartsAt])
+  @@map("scheduled_events")
+}
+
+/** Inscrição do usuário em um evento agendado (uma por usuário/evento). */
+model EventRegistration {
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  scheduledEventId  Int
+  createdAt         DateTime @default(now())
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheduledEvent ScheduledEvent @relation(fields: [scheduledEventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scheduledEventId])
+  @@index([scheduledEventId])
+  @@map("event_registrations")
+}
+
+model Quote {
+  id              Int      @id @default(autoincrement())
+  establishmentId Int
+  text            String   @db.VarChar(80) // frase de até 80 caracteres, visível por 12h
+  expiresAt       DateTime // createdAt + 12h
+  createdAt       DateTime @default(now())
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@map("quotes")
+}
+
+enum MenuItemType {
+  ALCOHOLIC_DRINK    // bebidas alcoólicas
+  NON_ALCOHOLIC_DRINK // bebidas sem álcool
+  COMBO
+  BOTTLE             // garrafas
+  FOOD               // comidas
+  HOOKAH             // narguile
+}
+
+model Menu {
+  id              Int   @id @default(autoincrement())
+  establishmentId Int   @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  items         MenuItem[]
+
+  @@map("menus")
+}
+
+model MenuItem {
+  id             Int      @id @default(autoincrement())
+  menuId         Int
+  name           String
+  description    String?
+  photoMenuItem  String?  // URL da foto do item (drink, etc.)
+  price          Decimal  @db.Decimal(10, 2)
+  type           MenuItemType
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  menu Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@map("menu_items")
+}
+
+model Feedback {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  establishmentId Int
+  rating          Int       // 1 a 5
+  comment         String?
+  photoUrl        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@map("feedbacks")
+}
