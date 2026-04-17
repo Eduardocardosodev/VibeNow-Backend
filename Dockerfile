@@ -31,8 +31,7 @@ COPY prisma.config.ts ./
 RUN mkdir -p uploads/menu-items uploads/event-posters uploads/feedback-photos
 
 ENV NODE_ENV=production
-ENV PORT=3004
 
 EXPOSE 3004
 
-CMD ["node", "dist/src/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]

@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: vibenow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@postgres:5432/vibenow
+      SECRET_KEY: ${SECRET_KEY:-iowjdiunoqwq834u129804435820!@#)@_)#1234567890!@#$$%^&*()_+23}
+      EXPIRES_IN: ${EXPIRES_IN:-3600}
+      PORT: 3004
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-iowjdiunoqwq834u129804435820!@#)@_)#1234567890!@#$$%^&*()_+}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-7d}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    volumes:
+      - uploads:/app/uploads
+    command: >
+      sh -c "npx prisma migrate deploy && node dist/src/main.js"
+
+volumes:
+  pgdata:
+  uploads:
