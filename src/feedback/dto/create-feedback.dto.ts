@@ -1,7 +1,6 @@
 import {
   IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -17,11 +16,40 @@ export class CreateFeedbackDto {
   @IsNotEmpty()
   establishmentId: number;
 
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   @IsNotEmpty()
   @Min(1)
   @Max(5)
-  rating: number;
+  ratingCrowding: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @IsNotEmpty()
+  @Min(1)
+  @Max(5)
+  ratingAnimation: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @IsNotEmpty()
+  @Min(1)
+  @Max(5)
+  ratingOrganization: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @IsNotEmpty()
+  @Min(1)
+  @Max(5)
+  ratingHygiene: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @IsNotEmpty()
+  @Min(1)
+  @Max(5)
+  ratingAmbience: number;
 
   @IsString()
   @IsOptional()

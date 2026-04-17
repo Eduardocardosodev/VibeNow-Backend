@@ -6,6 +6,7 @@ export type EstablishmentMapItemJson = {
   name: string;
   cnpj: string;
   address: string;
+  addressNumber: string;
   city: string;
   state: string;
   zipCode: string;
@@ -32,6 +33,7 @@ export function establishmentToMapJson(
     name: e.name,
     cnpj: e.cnpj,
     address: e.address,
+    addressNumber: e.addressNumber,
     city: e.city,
     state: e.state,
     zipCode: e.zipCode,

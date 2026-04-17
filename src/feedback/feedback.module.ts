@@ -5,6 +5,7 @@ import {
 } from 'src/establishment/establishment.module';
 import { IRepositoryEstablishment } from 'src/establishment/infrastructure/repository/IRepository.repository';
 import { FeedbackController } from './feedback.controller';
+import { EstablishmentFeedbackInsightsController } from './establishment-feedback-insights.controller';
 import { FeedbackUsecase } from './usecases/Feedback.usecase';
 import { IRepositoryFeedback } from './infrastructure/repository/IRepository.repository';
 import { PrismaFeedbackRepository } from './infrastructure/repository/PrismaFeedback.repository';
@@ -13,7 +14,7 @@ export const IREPOSITORY_FEEDBACK = Symbol('IRepositoryFeedback');
 
 @Module({
   imports: [EstablishmentModule],
-  controllers: [FeedbackController],
+  controllers: [FeedbackController, EstablishmentFeedbackInsightsController],
   providers: [
     PrismaFeedbackRepository,
     {

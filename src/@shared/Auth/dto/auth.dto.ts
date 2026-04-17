@@ -1,4 +1,5 @@
 import {
+  IsEmail,
   IsNotEmpty,
   IsPhoneNumber,
   IsString,
@@ -18,6 +19,18 @@ export class LoginDto {
   @IsNotEmpty()
   @MinLength(8)
   @MaxLength(20)
+  password: string;
+}
+
+export class LoginEmailDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  @MaxLength(72)
   password: string;
 }
 

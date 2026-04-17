@@ -1,4 +1,6 @@
 import {
+  IsBoolean,
+  IsDateString,
   IsEmail,
   IsNotEmpty,
   IsOptional,
@@ -33,6 +35,18 @@ export class CreateUserDto {
   @MinLength(8)
   @MaxLength(20)
   password: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  dateOfBirth: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  acceptedTermsOfUse: boolean;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  acceptedPrivacyPolicy: boolean;
 }
 
 export class UpdateUserDto {

@@ -93,6 +93,12 @@ export class CreateEstablishmentDto {
   @MaxLength(200)
   address: string;
 
+  /** Número do endereço (ex.: 1200, 42A, S/N). */
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(30)
+  addressNumber: string;
+
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)

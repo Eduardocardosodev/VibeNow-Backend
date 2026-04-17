@@ -19,7 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "load-test:baseline": "k6 run load-tests/baseline.js",
-    "metrics:peek": "curl -s http://127.0.0.1:3004/metrics | head -40"
+    "seed:dashboard": "ts-node prisma/seed-dashboard.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -37,8 +37,8 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "dotenv": "^17.3.1",
+    "multer": "^2.1.1",
     "pg": "^8.20.0",
-    "prom-client": "^15.1.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -50,6 +50,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.1.0",
     "@types/node": "^22.10.7",
     "@types/pg": "^8.18.0",
     "@types/supertest": "^6.0.2",

@@ -78,7 +78,7 @@ export class EventsScheduleUsecase {
       data.establishmentId,
     );
     if (!establishment) {
-      throw new NotFoundException('Establishment not found');
+      throw new NotFoundException('Estabelecimento não encontrado.');
     }
 
     const startsAt = new Date(data.eventStartsAt);
@@ -128,7 +128,7 @@ export class EventsScheduleUsecase {
   async findById(id: number): Promise<ScheduledEvent> {
     const event = await this.eventRepository.findById(id);
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('Evento não encontrado.');
     }
     return event;
   }
@@ -162,7 +162,7 @@ export class EventsScheduleUsecase {
   ): Promise<ScheduledEvent> {
     const existing = await this.eventRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('Evento não encontrado.');
     }
 
     if (data.establishmentId != null) {
@@ -170,7 +170,7 @@ export class EventsScheduleUsecase {
         data.establishmentId,
       );
       if (!establishment) {
-        throw new NotFoundException('Establishment not found');
+        throw new NotFoundException('Estabelecimento não encontrado.');
       }
     }
 
@@ -223,9 +223,7 @@ export class EventsScheduleUsecase {
       tablePriceVal = null;
     } else if (offersTable) {
       tablePriceVal =
-        data.tablePrice !== undefined
-          ? data.tablePrice
-          : existing.tablePrice;
+        data.tablePrice !== undefined ? data.tablePrice : existing.tablePrice;
     } else {
       tablePriceVal = null;
     }
@@ -293,14 +291,14 @@ export class EventsScheduleUsecase {
 
     assertReservationCapacities(updated);
     const result = await this.eventRepository.update(updated);
-    if (!result) throw new NotFoundException('Event not found');
+    if (!result) throw new NotFoundException('Evento não encontrado.');
     return result;
   }
 
   async delete(id: number): Promise<void> {
     const existing = await this.eventRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('Evento não encontrado.');
     }
     await this.eventRepository.delete(id);
   }

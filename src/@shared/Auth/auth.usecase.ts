@@ -5,9 +5,12 @@ import {
 } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
+import { EstablishmentAccessService } from 'src/establishment/services/establishment-access.service';
+import { RegisterEstablishmentAndOwnerDto } from 'src/establishment/dto/register-establishment-and-owner.dto';
 import { User } from 'src/user/domain/entities/user.entity';
 import { UserUsecase } from 'src/user/usecases/User.usecase';
-import { LoginDto } from './dto/auth.dto';
+import { toUserResponse } from 'src/user/dto/user-response.dto';
+import { LoginDto, LoginEmailDto } from './dto/auth.dto';
 
 /** Access token curto; refresh JWT longo — ambos stateless (nada no banco). */
 const ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES ?? '15m';
@@ -18,25 +21,63 @@ export class AuthUsecase {
   constructor(
     private readonly userUsecase: UserUsecase,
     private readonly jwtService: JwtService,
+    private readonly establishmentAccess: EstablishmentAccessService,
   ) {}
 
   async login(data: LoginDto) {
-    const user = await this.userUsecase.findByPhone(data.phone);
+    const user = await this.userUsecase.findByPhoneOrNull(data.phone);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciais inválidas.');
     }
 
     const passwordMatch = await bcrypt.compare(data.password, user.password);
     if (!passwordMatch) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciais inválidas.');
     }
 
     return this.issueTokenPair(user);
   }
 
+  /** Portal web do estabelecimento (e-mail + senha). */
+  async loginWithEmail(data: LoginEmailDto) {
+    const user = await this.userUsecase.findByEmailOrNull(data.email);
+    if (!user) {
+      throw new UnauthorizedException('Credenciais inválidas.');
+    }
+
+    const passwordMatch = await bcrypt.compare(data.password, user.password);
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Credenciais inválidas.');
+    }
+
+    return this.issueTokenPair(user);
+  }
+
+  /** Cadastro self-service: cria estabelecimento + dono; login com e-mail e senha do body. */
+  async registerEstablishmentAndOwner(dto: RegisterEstablishmentAndOwnerDto) {
+    const { user: created, establishmentId } =
+      await this.establishmentAccess.registerEstablishmentAndOwner(dto);
+    const user = await this.userUsecase.findById(created.id);
+    return {
+      ...this.issueTokenPair(user),
+      user: toUserResponse(user),
+      establishmentId,
+    };
+  }
+
+  /** Perfil + visões (dono / funcionário) para o app ou portal. */
+  async getMeWithAccess(userId: number) {
+    const user = await this.userUsecase.findById(userId);
+    const access = await this.establishmentAccess.getAccessSummary(userId);
+    return {
+      user: toUserResponse(user),
+      access,
+    };
+  }
+
   async refresh(refreshToken: string) {
     if (!refreshToken?.trim()) {
-      throw new UnauthorizedException('Refresh token is required');
+      throw new UnauthorizedException('Refresh token é obrigatório.');
     }
 
     const refreshSecret = this.getRefreshSecret();
@@ -47,22 +88,22 @@ export class AuthUsecase {
         typ: string;
       }>(refreshToken, { secret: refreshSecret });
     } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException('Refresh token inválido ou expirado.');
     }
 
     if (payload.typ !== 'refresh') {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Refresh token inválido.');
     }
 
     const userId =
       typeof payload.sub === 'number' ? payload.sub : Number(payload.sub);
     if (!Number.isFinite(userId)) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Refresh token inválido.');
     }
 
     const user = await this.userUsecase.findById(userId);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Usuário não encontrado.');
     }
 
     return this.issueTokenPair(user);
@@ -86,6 +127,7 @@ export class AuthUsecase {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     };
     return this.jwtService.sign(payload, {
       expiresIn: ACCESS_EXPIRES_IN,
@@ -105,7 +147,7 @@ export class AuthUsecase {
     const secret = process.env.JWT_REFRESH_SECRET;
     if (!secret?.trim()) {
       throw new InternalServerErrorException(
-        'JWT_REFRESH_SECRET is not configured',
+        'JWT_REFRESH_SECRET não está configurado.',
       );
     }
     return secret;

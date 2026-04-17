@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../generated/prisma/client';
 
 const prisma = new PrismaClient();
@@ -52,6 +53,7 @@ const establishments = [
     name: 'Lounge Canoas Centro',
     cnpj: '12345678000191',
     address: 'Av. Getúlio Vargas, 4200',
+    addressNumber: '4200',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92020000',
@@ -70,6 +72,7 @@ const establishments = [
     name: 'Festas Nossa Sra. das Graças',
     cnpj: '12345678000192',
     address: 'Rua Tiradentes, 850',
+    addressNumber: '850',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92025010',
@@ -88,6 +91,7 @@ const establishments = [
     name: 'Lounge Mathias Velho',
     cnpj: '12345678000193',
     address: 'Av. Guilherme Schell, 6100',
+    addressNumber: '6100',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92320000',
@@ -106,6 +110,7 @@ const establishments = [
     name: 'House Party Canoas',
     cnpj: '12345678000194',
     address: 'Rua Dona Isabel, 720',
+    addressNumber: '720',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92010020',
@@ -124,6 +129,7 @@ const establishments = [
     name: 'Lounge São Luís',
     cnpj: '12345678000195',
     address: 'Av. Victor Barreto, 3500',
+    addressNumber: '3500',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92030000',
@@ -142,6 +148,7 @@ const establishments = [
     name: 'Salão de Festas Estância Velha',
     cnpj: '12345678000196',
     address: 'Rua São José, 450',
+    addressNumber: '450',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92040000',
@@ -160,6 +167,7 @@ const establishments = [
     name: 'Lounge Olaria Canoas',
     cnpj: '12345678000197',
     address: 'Rua Olaria, 180',
+    addressNumber: '180',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92020150',
@@ -178,6 +186,7 @@ const establishments = [
     name: 'Balada Igara Canoas',
     cnpj: '12345678000198',
     address: 'Av. Dr. Sezefredo Azambuja Vieira, 2400',
+    addressNumber: '2400',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92480000',
@@ -196,6 +205,7 @@ const establishments = [
     name: 'Espaço Harmonia Eventos — Canoas',
     cnpj: '12345678000199',
     address: 'Rua Jacob Wiegand, 120',
+    addressNumber: '120',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92025580',
@@ -214,6 +224,7 @@ const establishments = [
     name: 'Verona Rooftop Canoas',
     cnpj: '12345678000200',
     address: 'Av. Farroupilha, 4545',
+    addressNumber: '4545',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92020100',
@@ -232,6 +243,7 @@ const establishments = [
     name: 'Festas Nilo Peçanha — Canoas',
     cnpj: '12345678000201',
     address: 'Rua Nilo Peçanha, 890',
+    addressNumber: '890',
     city: 'Canoas',
     state: 'RS',
     zipCode: '92020420',
@@ -250,6 +262,7 @@ const establishments = [
     name: 'Bohème Cidade Baixa',
     cnpj: '12345678000202',
     address: 'Rua da República, 152',
+    addressNumber: '152',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '90050161',
@@ -268,6 +281,7 @@ const establishments = [
     name: 'Sky Lounge Moinhos de Vento',
     cnpj: '12345678000203',
     address: 'Av. Independência, 1350',
+    addressNumber: '1350',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '90570000',
@@ -286,6 +300,7 @@ const establishments = [
     name: 'Groove Bom Fim',
     cnpj: '12345678000204',
     address: 'Av. Osvaldo Aranha, 640',
+    addressNumber: '640',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '90035190',
@@ -304,6 +319,7 @@ const establishments = [
     name: 'Salão Festas Tristeza Sul',
     cnpj: '12345678000205',
     address: 'Av. Wenceslau Escobar, 3220',
+    addressNumber: '3220',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '91900000',
@@ -322,6 +338,7 @@ const establishments = [
     name: 'Sunset Praia de Belas',
     cnpj: '12345678000206',
     address: 'Av. Praia de Belas, 1188',
+    addressNumber: '1188',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '90110000',
@@ -340,6 +357,7 @@ const establishments = [
     name: 'Barba Negra Historic POA',
     cnpj: '12345678000207',
     address: 'Rua Vigário José Inácio, 160',
+    addressNumber: '160',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '90020110',
@@ -358,6 +376,7 @@ const establishments = [
     name: 'Arena Hall Petrópolis',
     cnpj: '12345678000208',
     address: 'Rua Almirante Barroso, 2400',
+    addressNumber: '2400',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '90035100',
@@ -376,6 +395,7 @@ const establishments = [
     name: 'Bela Vista Premium Lounge',
     cnpj: '12345678000209',
     address: 'Av. Borges de Medeiros, 2100',
+    addressNumber: '2100',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '90110020',
@@ -394,6 +414,7 @@ const establishments = [
     name: 'Chácara das Pedras Festas',
     cnpj: '12345678000210',
     address: 'Av. Dr. Nilo Peçanha, 3300',
+    addressNumber: '3300',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '91330100',
@@ -412,6 +433,7 @@ const establishments = [
     name: 'Opinião Night Porto Alegre',
     cnpj: '12345678000211',
     address: 'Rua José do Patrocínio, 834',
+    addressNumber: '834',
     city: 'Porto Alegre',
     state: 'RS',
     zipCode: '90050103',
@@ -1587,7 +1609,27 @@ function buildEventDates(seed: ScheduledEventSeed, now: Date) {
   return { startsAt, endsAt };
 }
 
+async function cleanDatabase() {
+  console.log('Limpando banco de dados...');
+
+  await prisma.orderItem.deleteMany();
+  await prisma.customerOrder.deleteMany();
+  await prisma.eventRegistration.deleteMany();
+  await prisma.scheduledEvent.deleteMany();
+  await prisma.feedback.deleteMany();
+  await prisma.menuItem.deleteMany();
+  await prisma.menu.deleteMany();
+  await prisma.quote.deleteMany();
+  await prisma.establishmentEmployee.deleteMany();
+  await prisma.establishment.deleteMany();
+  await prisma.user.deleteMany();
+
+  console.log('Banco de dados limpo com sucesso.');
+}
+
 async function main() {
+  await cleanDatabase();
+
   for (const e of establishments) {
     await prisma.establishment.upsert({
       where: { cnpj: e.cnpj },
@@ -1595,6 +1637,7 @@ async function main() {
       update: {
         name: e.name,
         address: e.address,
+        addressNumber: e.addressNumber,
         city: e.city,
         state: e.state,
         zipCode: e.zipCode,
@@ -1611,9 +1654,139 @@ async function main() {
       create: e,
     });
   }
+
+  /** Dono seed: mesmo `email` e `phone` da ficha; senha dev partilhada para login no portal (`POST /auth/login-email`). */
+  const SEED_OWNER_PASSWORD_PLAIN = 'Owner123!';
+  const ownerPasswordHash = await bcrypt.hash(SEED_OWNER_PASSWORD_PLAIN, 10);
+  for (const e of establishments) {
+    const est = await prisma.establishment.findUnique({
+      where: { cnpj: e.cnpj },
+    });
+    if (!est) continue;
+    const ownerUser = await prisma.user.upsert({
+      where: { phone: e.phone },
+      create: {
+        name: `Dono — ${e.name}`,
+        phone: e.phone,
+        email: e.email,
+        password: ownerPasswordHash,
+        role: 'OWNER_ESTABLISHMENT',
+        dateOfBirth: new Date('1990-01-01'),
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      },
+      update: {
+        name: `Dono — ${e.name}`,
+        email: e.email,
+        password: ownerPasswordHash,
+        role: 'OWNER_ESTABLISHMENT',
+        dateOfBirth: new Date('1990-01-01'),
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      },
+    });
+    await prisma.establishment.update({
+      where: { id: est.id },
+      data: { ownerUserId: ownerUser.id },
+    });
+  }
+  console.log(
+    `seedOwners | ${establishments.length} dono(s): POST /auth/login-email com o e-mail de contacto de cada estabelecimento | senha dev (todos): ${SEED_OWNER_PASSWORD_PLAIN}`,
+  );
+
+  /** Lounge Canoas Centro: recompensa pós-feedback ligada (para testar `POST /feedbacks` → `reward`). */
+  const loungeCentroCnpj = '12345678000191';
+  await prisma.establishment.update({
+    where: { cnpj: loungeCentroCnpj },
+    data: {
+      feedbackRewardEnabled: true,
+      feedbackRewardMessage:
+        'Obrigado pelo feedback! Você ganha 10% de desconto na próxima consumação — mostre este aviso no balcão.',
+    },
+  });
+  console.log(
+    `Recompensa pós-feedback ativa: Lounge Canoas Centro (CNPJ ${loungeCentroCnpj}).`,
+  );
+
+  /** Verona Rooftop Canoas: recompensa pós-feedback (rooftop). */
+  const veronaRooftopCnpj = '12345678000200';
+  await prisma.establishment.update({
+    where: { cnpj: veronaRooftopCnpj },
+    data: {
+      feedbackRewardEnabled: true,
+      feedbackRewardMessage:
+        'Obrigado pelo feedback no Verona Rooftop! Você ganha uma caipirinha tradicional na próxima visita — mostre este aviso na recepção do rooftop.',
+    },
+  });
+  console.log(
+    `Recompensa pós-feedback ativa: Verona Rooftop Canoas (CNPJ ${veronaRooftopCnpj}).`,
+  );
+
   console.log(
     `Seed concluído: ${establishments.length} estabelecimentos (Canoas e Porto Alegre, RS).`,
   );
+
+  /**
+   * Funcionário de teste no Lounge Canoas Centro (mesmo estabelecimento dos pedidos seed).
+   * `seedEmployeeUserId` é preenchido após o upsert e usado como `userId` dos `customer_orders` seed.
+   */
+  const seedEmployeeCnpj = '12345678000191';
+  const seedEmployee = {
+    phone: '51999999999',
+    name: 'Funcionário Seed',
+    email: 'funcionario.seed1@vibenow.test',
+    passwordPlain: 'Employee123!',
+  };
+  let seedEmployeeUserId: number | undefined;
+  const loungeCanoas = await prisma.establishment.findUnique({
+    where: { cnpj: seedEmployeeCnpj },
+  });
+  if (loungeCanoas) {
+    const hashed = await bcrypt.hash(seedEmployee.passwordPlain, 10);
+    const employeeUser = await prisma.user.upsert({
+      where: { phone: seedEmployee.phone },
+      create: {
+        name: seedEmployee.name,
+        phone: seedEmployee.phone,
+        email: seedEmployee.email,
+        password: hashed,
+        role: 'EMPLOYEE_ESTABLISHMENT',
+        dateOfBirth: new Date('1995-06-15'),
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      },
+      update: {
+        name: seedEmployee.name,
+        email: seedEmployee.email,
+        password: hashed,
+        role: 'EMPLOYEE_ESTABLISHMENT',
+        dateOfBirth: new Date('1995-06-15'),
+        acceptedTermsOfUse: true,
+        acceptedPrivacyPolicy: true,
+      },
+    });
+    seedEmployeeUserId = employeeUser.id;
+    await prisma.establishmentEmployee.upsert({
+      where: {
+        establishmentId_userId: {
+          establishmentId: loungeCanoas.id,
+          userId: employeeUser.id,
+        },
+      },
+      create: {
+        establishmentId: loungeCanoas.id,
+        userId: employeeUser.id,
+      },
+      update: {},
+    });
+    console.log(
+      `seedEmployee | userId=${employeeUser.id} | telefone ${seedEmployee.phone} | senha: ${seedEmployee.passwordPlain} | establishmentId=${loungeCanoas.id} (${loungeCanoas.name}) | painel: GET /establishments/${loungeCanoas.id}/orders | login: POST /auth/login`,
+    );
+  } else {
+    console.warn(
+      `Seed employee: estabelecimento CNPJ ${seedEmployeeCnpj} não encontrado; funcionário de teste não criado.`,
+    );
+  }
 
   // Menus com itens apenas para estabelecimentos que têm entrada em menuItemsByCnpj
   const establishmentIds = await prisma.establishment.findMany({
@@ -1650,6 +1823,148 @@ async function main() {
     menusCreated++;
   }
   console.log(`Menus criados/atualizados: ${menusCreated} (com itens).`);
+
+  /**
+   * Pedidos de teste no mesmo estabelecimento do `seedEmployee` (Lounge Canoas Centro).
+   * `userId` dos pedidos = `seedEmployeeUserId` (funcionário criado acima).
+   * Abertos: PENDING / IN_PROGRESS / READY. Finalizados: DELIVERED / CANCELLED.
+   * Idempotente: apaga pedidos seed deste estabelecimento pelo prefixo em locationNote.
+   */
+  const SEED_ORDER_NOTE_PREFIX = '[SEED_ORDER]';
+  const seedOrdersCnpj = seedEmployeeCnpj;
+  const seedOrderUserId =
+    seedEmployeeUserId ??
+    (
+      await prisma.user.findUnique({
+        where: { phone: seedEmployee.phone },
+        select: { id: true },
+      })
+    )?.id;
+  const seedOrderUser =
+    seedOrderUserId != null
+      ? await prisma.user.findUnique({ where: { id: seedOrderUserId } })
+      : null;
+  const estForSeedOrders = await prisma.establishment.findUnique({
+    where: { cnpj: seedOrdersCnpj },
+    select: { id: true, name: true },
+  });
+  if (!seedOrderUserId || !seedOrderUser) {
+    console.warn(
+      `Seed orders: utilizador seedEmployee não encontrado (telefone ${seedEmployee.phone}); pedidos de teste não criados.`,
+    );
+  } else if (!estForSeedOrders) {
+    console.warn(
+      `Seed orders: estabelecimento CNPJ ${seedOrdersCnpj} não encontrado.`,
+    );
+  } else {
+    const menuForOrders = await prisma.menu.findUnique({
+      where: { establishmentId: estForSeedOrders.id },
+      include: { items: { orderBy: { id: 'asc' } } },
+    });
+    if (!menuForOrders?.items.length) {
+      console.warn(
+        `Seed orders: sem itens de cardápio no estabelecimento id=${estForSeedOrders.id}.`,
+      );
+    } else {
+      await prisma.customerOrder.deleteMany({
+        where: {
+          establishmentId: estForSeedOrders.id,
+          locationNote: { startsWith: SEED_ORDER_NOTE_PREFIX },
+        },
+      });
+      const mi = menuForOrders.items;
+      const line = (
+        item: (typeof mi)[number],
+        quantity: number,
+      ): {
+        menuItemId: number;
+        quantity: number;
+        unitPrice: typeof item.price;
+        itemName: string;
+      } => ({
+        menuItemId: item.id,
+        quantity,
+        unitPrice: item.price,
+        itemName: item.name,
+      });
+
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+      /** Pedidos ainda em curso (painel “ativos”). */
+      await prisma.customerOrder.create({
+        data: {
+          establishmentId: estForSeedOrders.id,
+          userId: seedOrderUserId,
+          locationNote: `${SEED_ORDER_NOTE_PREFIX} Mesa 12 — área principal`,
+          status: 'PENDING',
+          items: {
+            create: [line(mi[0], 2), line(mi[mi.length > 1 ? 1 : 0], 1)],
+          },
+        },
+      });
+      await prisma.customerOrder.create({
+        data: {
+          establishmentId: estForSeedOrders.id,
+          userId: seedOrderUserId,
+          locationNote: `${SEED_ORDER_NOTE_PREFIX} Camarote B / número 4`,
+          status: 'IN_PROGRESS',
+          items: { create: [line(mi[0], 1)] },
+        },
+      });
+      await prisma.customerOrder.create({
+        data: {
+          establishmentId: estForSeedOrders.id,
+          userId: seedOrderUserId,
+          locationNote: `${SEED_ORDER_NOTE_PREFIX} Área externa — mesa alta`,
+          status: 'READY',
+          items: {
+            create:
+              mi.length >= 3
+                ? [line(mi[2], 3)]
+                : [line(mi[0], 1), line(mi[mi.length > 1 ? 1 : 0], 2)],
+          },
+        },
+      });
+      await prisma.customerOrder.create({
+        data: {
+          establishmentId: estForSeedOrders.id,
+          userId: seedOrderUserId,
+          locationNote: `${SEED_ORDER_NOTE_PREFIX} Bar — bancada`,
+          status: 'PENDING',
+          items: { create: [line(mi[0], 1)] },
+        },
+      });
+
+      /** Pedidos finalizados (histórico / filtros DELIVERED ou CANCELLED). */
+      await prisma.customerOrder.create({
+        data: {
+          establishmentId: estForSeedOrders.id,
+          userId: seedOrderUserId,
+          locationNote: `${SEED_ORDER_NOTE_PREFIX} Mesa 3 — entregue ontem`,
+          status: 'DELIVERED',
+          createdAt: twoDaysAgo,
+          items: {
+            create: [line(mi[mi.length > 1 ? 1 : 0], 2)],
+          },
+        },
+      });
+      await prisma.customerOrder.create({
+        data: {
+          establishmentId: estForSeedOrders.id,
+          userId: seedOrderUserId,
+          locationNote: `${SEED_ORDER_NOTE_PREFIX} VIP 1 — cliente desistiu`,
+          status: 'CANCELLED',
+          createdAt: threeDaysAgo,
+          items: { create: [line(mi[0], 1)] },
+        },
+      });
+
+      console.log(
+        `Pedidos seed: 4 abertos (2×PENDING, IN_PROGRESS, READY) + 2 finalizados (DELIVERED, CANCELLED) | userId=${seedOrderUserId} (= seedEmployee) | establishmentId=${estForSeedOrders.id} (${estForSeedOrders.name}).`,
+      );
+    }
+  }
 
   const TWELVE_H_MS = 12 * 60 * 60 * 1000;
   let quotesCreated = 0;

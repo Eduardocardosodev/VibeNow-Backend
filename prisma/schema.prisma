@@ -27,17 +27,33 @@ enum EventListType {
   VIP
 }
 
+enum UserRole {
+  NORMAL_USER 
+  ADMIN
+  OWNER_ESTABLISHMENT
+  EMPLOYEE_ESTABLISHMENT 
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String?   @unique
-  phone     String    @unique 
+  phone     String    @unique
   password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      UserRole  @default(NORMAL_USER)
 
-  feedbacks          Feedback[]
-  eventRegistrations EventRegistration[]
+  dateOfBirth            DateTime? @map("date_of_birth") @db.Date
+  acceptedTermsOfUse     Boolean   @default(false) @map("accepted_terms_of_use")
+  acceptedPrivacyPolicy  Boolean   @default(false) @map("accepted_privacy_policy")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  feedbacks                Feedback[]
+  eventRegistrations       EventRegistration[]
+  ownedEstablishments      Establishment[]           @relation("EstablishmentOwner")
+  establishmentEmployments EstablishmentEmployee[]
+  customerOrders           CustomerOrder[]
 
   @@map("users")
 }
@@ -47,6 +63,8 @@ model Establishment {
   name      String
   cnpj      String   @unique
   address   String
+  /** Número (logradouro), ex.: "1200", "42A", "S/N". */
+  addressNumber String @map("address_number") @db.VarChar(30)
   city      String
   state     String
   zipCode   String
@@ -59,16 +77,42 @@ model Establishment {
   longitude     Float
   score         Float
   openingHours  Json?   // horário por dia: { "monday": { "open": "18:00", "close": "02:00" }, "sunday": null }
+  /** Dono do portal (1 login por estabelecimento). */
+  ownerUserId   Int?    @map("owner_user_id")
+  /** Se true, após POST /feedbacks o app pode mostrar `reward.message` ao utilizador. */
+  feedbackRewardEnabled Boolean @default(false) @map("feedback_reward_enabled")
+  /** Texto livre (desconto, bebida, etc.); se vazio com recompensa ligada, o backend usa mensagem padrão. */
+  feedbackRewardMessage String? @db.VarChar(500) @map("feedback_reward_message")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  owner           User?                   @relation("EstablishmentOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
   feedbacks       Feedback[]
   menu            Menu?
   quotes          Quote[]
   scheduledEvents ScheduledEvent[]
+  employees       EstablishmentEmployee[]
+  customerOrders  CustomerOrder[]
 
+  @@index([ownerUserId])
   @@index([latitude, longitude])
   @@map("establishments")
+}
+
+/** Funcionário vinculado a um estabelecimento (app mobile, permissões restritas). */
+model EstablishmentEmployee {
+  id              Int      @id @default(autoincrement())
+  establishmentId Int
+  userId          Int
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([establishmentId, userId])
+  @@map("establishment_employees")
 }
 
 model ScheduledEvent {
@@ -167,22 +211,77 @@ model MenuItem {
   updatedAt      DateTime @updatedAt
 
   menu Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
 
   @@map("menu_items")
 }
 
-model Feedback {
-  id              Int       @id @default(autoincrement())
-  userId          Int
-  establishmentId Int
-  rating          Int       // 1 a 5
-  comment         String?
-  photoUrl        String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+/** Pedido no app (cardápio + onde o cliente está). */
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  READY
+  DELIVERED
+  CANCELLED
+}
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+model CustomerOrder {
+  id              Int         @id @default(autoincrement())
+  establishmentId Int
+  userId          Int
+  /** Onde encontrar o cliente: mesa, camarote, área, etc. */
+  locationNote    String      @db.VarChar(500)
+  status          OrderStatus @default(PENDING)
+  /** Dedup de retries (mesmo user + mesma chave = mesmo pedido). */
+  idempotencyKey  String?     @map("idempotency_key") @db.VarChar(128)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         OrderItem[]
+
+  @@unique([userId, idempotencyKey], map: "customer_orders_user_id_idempotency_key_key")
+  @@index([establishmentId, status, createdAt])
+  @@map("customer_orders")
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  menuItemId Int?
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(10, 2)
+  itemName   String   @db.VarChar(160)
+  createdAt  DateTime @default(now())
+
+  order    CustomerOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem?     @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Feedback {
+  id                  Int       @id @default(autoincrement())
+  userId              Int
+  establishmentId     Int
+  rating              Float     // média calculada dos 5 tópicos
+  ratingCrowding      Int       // Lotação (1-5)
+  ratingAnimation     Int       // Animação (1-5)
+  ratingOrganization  Int       // Organização (1-5)
+  ratingHygiene       Int       // Higiene (1-5)
+  ratingAmbience      Int       // Clima/Pessoas (1-5)
+  comment             String?
+  photoUrl            String?
+  /** Chave do cliente para deduplicar retries (mesmo user + mesma key = mesmo registro). Opcional até app mandar header. */
+  idempotencyKey      String?   @map("idempotency_key") @db.VarChar(128)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, idempotencyKey], map: "feedbacks_user_id_idempotency_key_key")
   @@map("feedbacks")
 }

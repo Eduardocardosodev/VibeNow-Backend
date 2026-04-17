@@ -15,6 +15,7 @@ type PrismaEstablishmentRow = {
   name: string;
   cnpj: string;
   address: string;
+  addressNumber: string;
   city: string;
   state: string;
   zipCode: string;
@@ -27,6 +28,9 @@ type PrismaEstablishmentRow = {
   longitude: number;
   score: number;
   openingHours?: unknown;
+  ownerUserId?: number | null;
+  feedbackRewardEnabled?: boolean;
+  feedbackRewardMessage?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -47,6 +51,7 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       row.name,
       row.cnpj,
       row.address,
+      row.addressNumber,
       row.city,
       row.state,
       row.zipCode,
@@ -59,6 +64,9 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       row.longitude,
       row.score,
       openingHours,
+      row.ownerUserId ?? null,
+      row.feedbackRewardEnabled ?? false,
+      row.feedbackRewardMessage ?? null,
       row.createdAt,
       row.updatedAt,
     );
@@ -69,6 +77,7 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       name: entity.name,
       cnpj: entity.cnpj,
       address: entity.address,
+      addressNumber: entity.addressNumber,
       city: entity.city,
       state: entity.state,
       zipCode: entity.zipCode,
@@ -81,6 +90,9 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       longitude: entity.longitude,
       score: entity.score,
       openingHours: entity.openingHours ?? undefined,
+      ownerUserId: entity.ownerUserId ?? undefined,
+      feedbackRewardEnabled: entity.feedbackRewardEnabled,
+      feedbackRewardMessage: entity.feedbackRewardMessage ?? undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };
@@ -175,6 +187,7 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       name: entity.name,
       cnpj: entity.cnpj,
       address: entity.address,
+      addressNumber: entity.addressNumber,
       city: entity.city,
       state: entity.state,
       zipCode: entity.zipCode,
@@ -187,6 +200,9 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       longitude: entity.longitude,
       score: entity.score,
       openingHours: entity.openingHours ?? undefined,
+      ownerUserId: entity.ownerUserId ?? undefined,
+      feedbackRewardEnabled: entity.feedbackRewardEnabled,
+      feedbackRewardMessage: entity.feedbackRewardMessage ?? undefined,
       updatedAt: entity.updatedAt,
     };
     const row = await this.prisma.establishment.update({

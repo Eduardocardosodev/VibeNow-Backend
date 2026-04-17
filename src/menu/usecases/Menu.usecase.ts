@@ -28,7 +28,7 @@ export class MenuUsecase {
       data.establishmentId,
     );
     if (!establishment) {
-      throw new NotFoundException('Establishment not found');
+      throw new NotFoundException('Estabelecimento não encontrado.');
     }
 
     const menu = await this.menuRepository.create(data.establishmentId);
@@ -69,7 +69,7 @@ export class MenuUsecase {
   async findById(id: number): Promise<MenuWithItems> {
     const menu = await this.menuRepository.findById(id);
     if (!menu) {
-      throw new NotFoundException('Menu not found');
+      throw new NotFoundException('Cardápio não encontrado.');
     }
     const items = await this.menuRepository.findItemsByMenuId(menu.id);
     return { ...menu, items };
@@ -78,7 +78,7 @@ export class MenuUsecase {
   async delete(id: number): Promise<void> {
     const menu = await this.menuRepository.findById(id);
     if (!menu) {
-      throw new NotFoundException('Menu not found');
+      throw new NotFoundException('Cardápio não encontrado.');
     }
     await this.menuRepository.delete(id);
   }
@@ -86,7 +86,7 @@ export class MenuUsecase {
   async addItem(menuId: number, dto: CreateMenuItemDto): Promise<MenuItem> {
     const menu = await this.menuRepository.findById(menuId);
     if (!menu) {
-      throw new NotFoundException('Menu not found');
+      throw new NotFoundException('Cardápio não encontrado.');
     }
     const now = new Date();
     const item = new MenuItem(
@@ -110,7 +110,7 @@ export class MenuUsecase {
   ): Promise<MenuItem> {
     const item = await this.menuRepository.findItemById(itemId);
     if (!item || item.menuId !== menuId) {
-      throw new NotFoundException('Menu item not found');
+      throw new NotFoundException('Item do cardápio não encontrado.');
     }
     const now = new Date();
     const updated = new MenuItem(
@@ -125,14 +125,14 @@ export class MenuUsecase {
       now,
     );
     const result = await this.menuRepository.updateItem(updated);
-    if (!result) throw new NotFoundException('Menu item not found');
+    if (!result) throw new NotFoundException('Item do cardápio não encontrado.');
     return result;
   }
 
   async removeItem(menuId: number, itemId: number): Promise<void> {
     const item = await this.menuRepository.findItemById(itemId);
     if (!item || item.menuId !== menuId) {
-      throw new NotFoundException('Menu item not found');
+      throw new NotFoundException('Item do cardápio não encontrado.');
     }
     await this.menuRepository.deleteItem(itemId);
   }

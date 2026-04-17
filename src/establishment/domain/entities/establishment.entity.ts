@@ -22,6 +22,7 @@ export class Establishment {
     public name: string,
     public cnpj: string,
     public address: string,
+    public addressNumber: string,
     public city: string,
     public state: string,
     public zipCode: string,
@@ -34,6 +35,11 @@ export class Establishment {
     public longitude: number,
     public score: number,
     public openingHours: OpeningHoursMap | null,
+    /** Dono do portal web (1 por estabelecimento). */
+    public ownerUserId: number | null,
+    /** Recompensa mostrada no app após feedback (se ligada + mensagem). */
+    public feedbackRewardEnabled: boolean,
+    public feedbackRewardMessage: string | null,
     public createdAt: Date,
     public updatedAt: Date,
   ) {}

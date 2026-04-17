@@ -18,7 +18,7 @@ export class QuoteUsecase {
       data.establishmentId,
     );
     if (!establishment) {
-      throw new NotFoundException('Establishment not found');
+      throw new NotFoundException('Estabelecimento não encontrado.');
     }
     const now = new Date();
     const expiresAt = new Date(now.getTime() + QUOTE_DURATION_MS);
@@ -35,7 +35,7 @@ export class QuoteUsecase {
   async findById(id: number): Promise<Quote> {
     const quote = await this.quoteRepository.findById(id);
     if (!quote) {
-      throw new NotFoundException('Quote not found');
+      throw new NotFoundException('Frase não encontrada.');
     }
     return quote;
   }
@@ -53,7 +53,7 @@ export class QuoteUsecase {
   async update(id: number, data: UpdateQuoteDto): Promise<Quote> {
     const quote = await this.quoteRepository.findById(id);
     if (!quote) {
-      throw new NotFoundException('Quote not found');
+      throw new NotFoundException('Frase não encontrada.');
     }
     const updated = new Quote(
       quote.id,
@@ -63,14 +63,14 @@ export class QuoteUsecase {
       quote.createdAt,
     );
     const result = await this.quoteRepository.update(updated);
-    if (!result) throw new NotFoundException('Quote not found');
+    if (!result) throw new NotFoundException('Frase não encontrada.');
     return result;
   }
 
   async delete(id: number): Promise<void> {
     const quote = await this.quoteRepository.findById(id);
     if (!quote) {
-      throw new NotFoundException('Quote not found');
+      throw new NotFoundException('Frase não encontrada.');
     }
     await this.quoteRepository.delete(id);
   }

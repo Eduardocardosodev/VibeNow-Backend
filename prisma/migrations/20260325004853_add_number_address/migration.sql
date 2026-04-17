@@ -1,0 +1,2 @@
+-- (corrigido) o DROP DEFAULT foi movido para 20260329143000_establishment_address_number
+-- Esta migration originalmente tentava alterar uma coluna que ainda não existia.

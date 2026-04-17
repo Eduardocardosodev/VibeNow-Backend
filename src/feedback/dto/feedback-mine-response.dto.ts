@@ -4,6 +4,11 @@ export type FeedbackMineResponse = {
   userId: number;
   establishmentId: number;
   rating: number;
+  ratingCrowding: number;
+  ratingAnimation: number;
+  ratingOrganization: number;
+  ratingHygiene: number;
+  ratingAmbience: number;
   comment: string | null;
   photoUrl: string | null;
   createdAt: Date;

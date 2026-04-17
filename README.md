@@ -36,6 +36,30 @@ $ npm install
 - Há **uma única instância** de cliente Prisma por processo: `PrismaService` em `src/prisma/` (`PrismaModule` global). Isso evita múltiplos pools de conexão com o Postgres.
 - Encerramento gracioso: `main.ts` chama `app.enableShutdownHooks()` e o `PrismaService` executa `$disconnect()` ao desligar o app.
 
+### Auth — visões (consumidor / portal / funcionário)
+
+- **`POST /auth/login`** — telefone + senha (app consumidor).
+- **`POST /auth/login-email`** — e-mail + senha (portal do estabelecimento ou quem tem e-mail).
+- **`POST /auth/register-establishment-and-owner`** — cadastro self-service: **ficha do estabelecimento + dono** (login com o e-mail da ficha e a senha escolhida). Ver `docs/ROLES-AND-ESTABLISHMENT-ACCESS.md` e `docs/PORTAL-WEB-BACKEND.md`.
+- **`GET /auth/me`** — utilizador + estabelecimentos como dono / funcionário.
+- **`POST /establishments/:establishmentId/employees`** — dono cria login de funcionário (JWT de dono obrigatório).
+
+### Pedidos (cardápio no app → painel do estabelecimento)
+
+- **`POST /orders`** — cliente: header **`Idempotency-Key`** (obrigatório; mesma chave em retries de rede), body com `establishmentId`, `locationNote`, `items`. **201** criado; **200** replay sem duplicar.
+- **`GET /orders/me`** — histórico do utilizador (`page`, `pageSize`, `status` opcional).
+- **`GET /establishments/:establishmentId/orders`** — dono/funcionário: lista pedidos para o painel.
+- **`PATCH /establishments/:establishmentId/orders/:orderId/status`** — atualizar `PENDING` → `IN_PROGRESS` → `READY` → `DELIVERED` (ou `CANCELLED`).
+
+Ver `docs/CUSTOMER-ORDERS.md`.
+
+### POST `/feedbacks` (idempotência / rede fraca)
+
+- Header **`Idempotency-Key`** obrigatório (não vazio, máx. 128 caracteres). Reutilize a **mesma** chave só nos **retries do mesmo envio** (falha de rede). Cada **novo** feedback (outro dia ou novo envio concluído) exige uma **chave nova** (ex.: UUID), senão o servidor pode devolver **200** com o registro antigo ligado àquela chave.
+- **201** = criado; **200** = replay (mesmo `id`). **409** = conflito (ex.: já houve feedback **hoje** nesse estabelecimento com **outra** chave; ou chave já usada em **outro** estabelecimento).
+- Resposta inclui **`reward`** (`{ "message": "..." }` ou `null`) quando o dono ativou a recompensa pós-feedback no portal — ver `docs/FEEDBACK-REWARD.md`.
+- Ver também `docs/FEEDBACK-RETRY-IDEMPOTENCY-TASKS.md`.
+
 ## Compile and run the project
 
 ```bash

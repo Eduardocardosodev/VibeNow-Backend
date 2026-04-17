@@ -5,11 +5,11 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ISPUBLIC_KEY } from 'src/@shared/decorators/ispublic.decorator';
+import { ISPUBLIC_KEY } from '../../../@shared/decorators/ispublic.decorator';
 import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
-import { UserUsecase } from 'src/user/usecases/User.usecase';
-import { toUserResponse } from 'src/user/dto/user-response.dto';
+import { UserUsecase } from '../../../user/usecases/User.usecase';
+import { toUserResponse } from '../../../user/dto/user-response.dto';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -32,7 +32,7 @@ export class AuthGuard implements CanActivate {
     const request: Request = context.switchToHttp().getRequest();
     const token = this.extractTokenFormHeader(request);
     if (!token) {
-      throw new UnauthorizedException('Token is required');
+      throw new UnauthorizedException('Token é obrigatório.');
     }
 
     let payload;
@@ -41,12 +41,12 @@ export class AuthGuard implements CanActivate {
         secret: process.env.SECRET_KEY,
       });
     } catch {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('Token inválido.');
     }
 
     const user = await this.userUsecase.findById(payload.id);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Usuário não encontrado.');
     }
 
     request['user'] = toUserResponse(user);

@@ -3,6 +3,7 @@ import { Establishment } from '../domain/entities/establishment.entity';
 import { CreateEstablishmentDto } from '../dto/create-establishment.dto';
 import { MapBoundsQueryDto } from '../dto/map-bounds-query.dto';
 import { UpdateEstablishmentDto } from '../dto/update-establishment.dto';
+import { UpdateFeedbackRewardDto } from '../dto/update-feedback-reward.dto';
 import {
   establishmentToMapJson,
   EstablishmentMapItemJson,
@@ -27,7 +28,7 @@ export class EstablishmentUsecase {
     );
     if (existingByCnpj) {
       throw new BadRequestException(
-        'Establishment with this CNPJ already exists',
+        'Já existe um estabelecimento com este CNPJ.',
       );
     }
 
@@ -36,7 +37,7 @@ export class EstablishmentUsecase {
     );
     if (existingByEmail) {
       throw new BadRequestException(
-        'Establishment with this email already exists',
+        'Já existe um estabelecimento com este e-mail.',
       );
     }
 
@@ -46,6 +47,7 @@ export class EstablishmentUsecase {
       data.name,
       data.cnpj,
       data.address,
+      data.addressNumber,
       data.city,
       data.state,
       data.zipCode,
@@ -58,6 +60,9 @@ export class EstablishmentUsecase {
       data.longitude,
       0,
       data.openingHours ?? null,
+      null,
+      false,
+      null,
       now,
       now,
     );
@@ -151,7 +156,7 @@ export class EstablishmentUsecase {
   async findAll(): Promise<Establishment[]> {
     const establishments = await this.establishmentRepository.findAll();
     if (establishments.length === 0) {
-      throw new NotFoundException('Establishments not found');
+      throw new NotFoundException('Nenhum estabelecimento encontrado.');
     }
     return establishments;
   }
@@ -159,7 +164,7 @@ export class EstablishmentUsecase {
   async findById(id: number): Promise<Establishment> {
     const establishment = await this.establishmentRepository.findById(id);
     if (!establishment) {
-      throw new NotFoundException('Establishment not found');
+      throw new NotFoundException('Estabelecimento não encontrado.');
     }
     return establishment;
   }
@@ -170,7 +175,7 @@ export class EstablishmentUsecase {
   ): Promise<Establishment | null> {
     const establishment = await this.establishmentRepository.findById(id);
     if (!establishment) {
-      throw new NotFoundException('Establishment not found');
+      throw new NotFoundException('Estabelecimento não encontrado.');
     }
 
     if (data.cnpj != null && data.cnpj !== establishment.cnpj) {
@@ -179,7 +184,7 @@ export class EstablishmentUsecase {
       );
       if (existingByCnpj) {
         throw new BadRequestException(
-          'Establishment with this CNPJ already exists',
+          'Já existe um estabelecimento com este CNPJ.',
         );
       }
     }
@@ -190,7 +195,7 @@ export class EstablishmentUsecase {
       );
       if (existingByEmail) {
         throw new BadRequestException(
-          'Establishment with this email already exists',
+          'Já existe um estabelecimento com este e-mail.',
         );
       }
     }
@@ -206,6 +211,7 @@ export class EstablishmentUsecase {
         data.name ?? establishment.name,
         data.cnpj ?? establishment.cnpj,
         data.address ?? establishment.address,
+        data.addressNumber ?? establishment.addressNumber,
         data.city ?? establishment.city,
         data.state ?? establishment.state,
         data.zipCode ?? establishment.zipCode,
@@ -220,16 +226,84 @@ export class EstablishmentUsecase {
         data.longitude ?? establishment.longitude,
         data.score ?? establishment.score,
         openingHours ?? null,
+        establishment.ownerUserId,
+        establishment.feedbackRewardEnabled,
+        establishment.feedbackRewardMessage,
         establishment.createdAt,
         now,
       ),
     );
   }
 
+  async getFeedbackRewardSettings(establishmentId: number) {
+    const establishment =
+      await this.establishmentRepository.findById(establishmentId);
+    if (!establishment) {
+      throw new NotFoundException('Estabelecimento não encontrado.');
+    }
+    return {
+      enabled: establishment.feedbackRewardEnabled,
+      message: establishment.feedbackRewardMessage,
+    };
+  }
+
+  async updateFeedbackReward(
+    establishmentId: number,
+    dto: UpdateFeedbackRewardDto,
+  ): Promise<{ enabled: boolean; message: string | null }> {
+    const establishment =
+      await this.establishmentRepository.findById(establishmentId);
+    if (!establishment) {
+      throw new NotFoundException('Estabelecimento não encontrado.');
+    }
+    const now = new Date();
+    const enabled =
+      dto.enabled !== undefined
+        ? dto.enabled
+        : establishment.feedbackRewardEnabled;
+    const message =
+      dto.message !== undefined
+        ? dto.message
+        : establishment.feedbackRewardMessage;
+    const updated = await this.establishmentRepository.update(
+      new Establishment(
+        establishment.id,
+        establishment.name,
+        establishment.cnpj,
+        establishment.address,
+        establishment.addressNumber,
+        establishment.city,
+        establishment.state,
+        establishment.zipCode,
+        establishment.phone,
+        establishment.email,
+        establishment.instagram,
+        establishment.establishmentType,
+        establishment.profilePhoto,
+        establishment.latitude,
+        establishment.longitude,
+        establishment.score,
+        establishment.openingHours,
+        establishment.ownerUserId,
+        enabled,
+        message,
+        establishment.createdAt,
+        now,
+      ),
+    );
+    if (!updated) {
+      throw new NotFoundException('Estabelecimento não encontrado.');
+    }
+    return {
+      enabled: updated.feedbackRewardEnabled,
+      message: updated.feedbackRewardMessage,
+    };
+  }
+
   async delete(id: number): Promise<void> {
     const establishment = await this.establishmentRepository.findById(id);
     if (!establishment) {
-      throw new NotFoundException('Establishment not found');
+      throw new NotFoundException('Estabelecimento não encontrado.');
     }
     return await this.establishmentRepository.delete(id);
   }

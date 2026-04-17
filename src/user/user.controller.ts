@@ -14,7 +14,7 @@ import { UserUsecase } from './usecases/User.usecase';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { toUserResponse } from './dto/user-response.dto';
-import { IsPublic } from 'src/@shared/decorators/ispublic.decorator';
+import { IsPublic } from '../@shared/decorators/ispublic.decorator';
 
 @Controller('users')
 export class UserController {
@@ -31,7 +31,7 @@ export class UserController {
   async getMe(@Req() req: Request) {
     const userId = (req as Request & { user?: { id: number } }).user?.id;
     if (userId == null) {
-      throw new UnauthorizedException('User not authenticated');
+      throw new UnauthorizedException('Usuário não autenticado.');
     }
     const user = await this.userUsecase.findById(userId);
     return toUserResponse(user);

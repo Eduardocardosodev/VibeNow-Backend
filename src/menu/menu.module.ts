@@ -29,5 +29,6 @@ export const IREPOSITORY_MENU = Symbol('IRepositoryMenu');
       inject: [IREPOSITORY_MENU, IREPOSITORY_ESTABLISHMENT],
     },
   ],
+  exports: [IREPOSITORY_MENU],
 })
 export class MenuModule {}

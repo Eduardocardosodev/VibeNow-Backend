@@ -34,7 +34,7 @@ export class EventRegistrationUsecase {
   async register(userId: number, scheduledEventId: number) {
     const event = await this.eventRepository.findById(scheduledEventId);
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('Evento não encontrado.');
     }
 
     const now = new Date();
@@ -79,7 +79,7 @@ export class EventRegistrationUsecase {
   async unregister(userId: number, scheduledEventId: number) {
     const event = await this.eventRepository.findById(scheduledEventId);
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('Evento não encontrado.');
     }
 
     const existing = await this.registrationRepository.findByUserAndEvent(
@@ -100,7 +100,7 @@ export class EventRegistrationUsecase {
   async getMyStatus(userId: number, scheduledEventId: number) {
     const event = await this.eventRepository.findById(scheduledEventId);
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('Evento não encontrado.');
     }
 
     const reg = await this.registrationRepository.findByUserAndEvent(
@@ -116,7 +116,7 @@ export class EventRegistrationUsecase {
   async countRegistrations(scheduledEventId: number) {
     const event = await this.eventRepository.findById(scheduledEventId);
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('Evento não encontrado.');
     }
 
     const count =

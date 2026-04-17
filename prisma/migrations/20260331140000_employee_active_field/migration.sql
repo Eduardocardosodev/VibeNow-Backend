@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "establishment_employees" ADD COLUMN "active" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
