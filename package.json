@@ -18,11 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "load-test:baseline": "k6 run load-tests/baseline.js",
-    "seed:dashboard": "ts-node prisma/seed-dashboard.ts"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "load-test:baseline": "k6 run load-tests/baseline.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

@@ -75,3 +75,7 @@ uploads/feedback-photos/*
 /backend/postman
 
 /docs
+
+# Seeds só em máquina local — não versionar (podem conter dados/senhas de demo)
+/prisma/seed.ts
+/prisma/seed-dashboard.ts
