@@ -35,6 +35,8 @@ export class Establishment {
     public longitude: number,
     public score: number,
     public openingHours: OpeningHoursMap | null,
+    /** IANA — relógio local para `openingHours` e períodos de score. */
+    public operatingTimeZone: string,
     /** Dono do portal web (1 por estabelecimento). */
     public ownerUserId: number | null,
     /** Recompensa mostrada no app após feedback (se ligada + mensagem). */

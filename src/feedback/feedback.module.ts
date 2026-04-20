@@ -9,6 +9,7 @@ import { EstablishmentFeedbackInsightsController } from './establishment-feedbac
 import { FeedbackUsecase } from './usecases/Feedback.usecase';
 import { IRepositoryFeedback } from './infrastructure/repository/IRepository.repository';
 import { PrismaFeedbackRepository } from './infrastructure/repository/PrismaFeedback.repository';
+import { EstablishmentOperatingSessionService } from 'src/establishment/services/establishment-operating-session.service';
 
 export const IREPOSITORY_FEEDBACK = Symbol('IRepositoryFeedback');
 
@@ -26,8 +27,13 @@ export const IREPOSITORY_FEEDBACK = Symbol('IRepositoryFeedback');
       useFactory: (
         repo: IRepositoryFeedback,
         establishmentRepo: IRepositoryEstablishment,
-      ) => new FeedbackUsecase(repo, establishmentRepo),
-      inject: [IREPOSITORY_FEEDBACK, IREPOSITORY_ESTABLISHMENT],
+        operatingSessions: EstablishmentOperatingSessionService,
+      ) => new FeedbackUsecase(repo, establishmentRepo, operatingSessions),
+      inject: [
+        IREPOSITORY_FEEDBACK,
+        IREPOSITORY_ESTABLISHMENT,
+        EstablishmentOperatingSessionService,
+      ],
     },
   ],
 })

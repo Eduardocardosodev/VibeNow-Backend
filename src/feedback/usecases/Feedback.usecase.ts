@@ -27,6 +27,8 @@ import {
 import { IRepositoryFeedback } from '../infrastructure/repository/IRepository.repository';
 import { IRepositoryEstablishment } from 'src/establishment/infrastructure/repository/IRepository.repository';
 import { Establishment } from 'src/establishment/domain/entities/establishment.entity';
+import { EstablishmentOperatingSessionService } from 'src/establishment/services/establishment-operating-session.service';
+import { isEstablishmentOpen } from 'src/@shared/utils/is-establishment-open';
 
 const DEFAULT_FEEDBACK_MINE_PAGE = 1;
 const DEFAULT_FEEDBACK_MINE_PAGE_SIZE = 20;
@@ -154,6 +156,7 @@ export class FeedbackUsecase {
   constructor(
     private readonly feedbackRepository: IRepositoryFeedback,
     private readonly establishmentRepository: IRepositoryEstablishment,
+    private readonly operatingSessionService: EstablishmentOperatingSessionService,
   ) {}
 
   private buildFeedbackReward(
@@ -176,6 +179,17 @@ export class FeedbackUsecase {
   private async recalculateEstablishmentScore(
     establishmentId: number,
   ): Promise<void> {
+    const establishment =
+      await this.establishmentRepository.findById(establishmentId);
+    if (!establishment) return;
+
+    if (establishment.openingHours) {
+      await this.operatingSessionService.refreshOperatingSessionScore(
+        establishmentId,
+      );
+      return;
+    }
+
     const feedbacks =
       await this.feedbackRepository.findByEstablishmentId(establishmentId);
     const score =
@@ -186,10 +200,6 @@ export class FeedbackUsecase {
               10,
           ) / 10
         : 0;
-
-    const establishment =
-      await this.establishmentRepository.findById(establishmentId);
-    if (!establishment) return;
 
     const now = new Date();
     await this.establishmentRepository.update(
@@ -211,6 +221,7 @@ export class FeedbackUsecase {
         establishment.longitude,
         score,
         establishment.openingHours,
+        establishment.operatingTimeZone,
         establishment.ownerUserId,
         establishment.feedbackRewardEnabled,
         establishment.feedbackRewardMessage,
@@ -240,11 +251,29 @@ export class FeedbackUsecase {
       return { feedback: existingByKey, replay: true, reward };
     }
 
+    const now = new Date();
+
+    const establishmentForHours =
+      await this.establishmentRepository.findById(data.establishmentId);
+    if (!establishmentForHours) {
+      throw new NotFoundException('Estabelecimento não encontrado.');
+    }
+    if (
+      !isEstablishmentOpen(
+        establishmentForHours.openingHours,
+        now,
+        establishmentForHours.operatingTimeZone,
+      )
+    ) {
+      throw new BadRequestException(
+        'O estabelecimento está fechado no momento. Feedbacks só podem ser enviados durante o horário de funcionamento.',
+      );
+    }
+
     const last = await this.feedbackRepository.findLastByUserAndEstablishment(
       userId,
       data.establishmentId,
     );
-    const now = new Date();
     if (last && isSameDay(last.createdAt, now)) {
       throw new ConflictException(
         'Você já fez um feedback para este estabelecimento hoje. Use a mesma Idempotency-Key para repetir o envio em caso de falha de rede, ou tente novamente amanhã com uma chave nova.',
@@ -272,7 +301,15 @@ export class FeedbackUsecase {
 
     try {
       const created = await this.feedbackRepository.create(feedback);
-      await this.recalculateEstablishmentScore(data.establishmentId);
+      if (establishmentForHours.openingHours) {
+        await this.operatingSessionService.onFeedbackCreated(
+          data.establishmentId,
+          rating,
+          now,
+        );
+      } else {
+        await this.recalculateEstablishmentScore(data.establishmentId);
+      }
       const reward = await this.rewardForEstablishment(data.establishmentId);
       return { feedback: created, replay: false, reward };
     } catch (e) {

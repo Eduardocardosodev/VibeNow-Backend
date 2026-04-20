@@ -10,6 +10,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterEstablishmentAndOwnerDto } from '../dto/register-establishment-and-owner.dto';
 import { CreateEstablishmentEmployeeDto } from '../dto/create-establishment-employee.dto';
 import { UserRole } from 'src/@shared/enums/userrole.enum';
+import { DEFAULT_OPERATING_TIME_ZONE } from 'src/@shared/utils/resolve-operating-period-utc';
 
 export type EstablishmentSummary = {
   id: number;
@@ -148,6 +149,8 @@ export class EstablishmentAccessService {
           longitude: dto.longitude,
           score: 0,
           openingHours: dto.openingHours ?? undefined,
+          operatingTimeZone:
+            dto.operatingTimeZone?.trim() || DEFAULT_OPERATING_TIME_ZONE,
         },
       });
 

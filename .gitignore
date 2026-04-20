@@ -67,6 +67,8 @@ uploads/event-posters/*
 !uploads/event-posters/.gitkeep
 uploads/feedback-photos/*
 !uploads/feedback-photos/.gitkeep
+uploads/establishment-profiles/*
+!uploads/establishment-profiles/.gitkeep
 
 # Postman collection
 ../postman/VibeNow-API.postman_collection.json

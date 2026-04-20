@@ -28,7 +28,7 @@ COPY --from=build /app/generated ./generated
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
-RUN mkdir -p uploads/menu-items uploads/event-posters uploads/feedback-photos
+RUN mkdir -p uploads/menu-items uploads/event-posters uploads/feedback-photos uploads/establishment-profiles
 
 ENV NODE_ENV=production
 

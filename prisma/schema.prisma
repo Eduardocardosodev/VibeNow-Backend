@@ -77,6 +77,8 @@ model Establishment {
   longitude     Float
   score         Float
   openingHours  Json?   // horário por dia: { "monday": { "open": "18:00", "close": "02:00" }, "sunday": null }
+  /** IANA (ex.: America/Sao_Paulo) — horário de funcionamento e períodos de score por “dia operacional”. */
+  operatingTimeZone String @default("America/Sao_Paulo") @map("operating_time_zone") @db.VarChar(64)
   /** Dono do portal (1 login por estabelecimento). */
   ownerUserId   Int?    @map("owner_user_id")
   /** Se true, após POST /feedbacks o app pode mostrar `reward.message` ao utilizador. */
@@ -88,6 +90,8 @@ model Establishment {
 
   owner           User?                   @relation("EstablishmentOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
   feedbacks       Feedback[]
+  operatingSession EstablishmentOperatingSession?
+  scorePeriods    EstablishmentScorePeriod[]
   menu            Menu?
   quotes          Quote[]
   scheduledEvents ScheduledEvent[]
@@ -97,6 +101,39 @@ model Establishment {
   @@index([ownerUserId])
   @@index([latitude, longitude])
   @@map("establishments")
+}
+
+/** Sessão operacional corrente: agregados de feedback até periodEndUtc (média exposta em establishments.score). */
+model EstablishmentOperatingSession {
+  establishmentId Int      @id @map("establishment_id")
+  periodStartUtc    DateTime @map("period_start_utc")
+  periodEndUtc      DateTime @map("period_end_utc")
+  sumRating         Float    @default(0) @map("sum_rating")
+  feedbackCount     Int      @default(0) @map("feedback_count")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@index([periodEndUtc])
+  @@map("establishment_operating_sessions")
+}
+
+/** Histórico de períodos fechados (média materializada ao fim do dia operacional). */
+model EstablishmentScorePeriod {
+  id              Int      @id @default(autoincrement())
+  establishmentId Int    @map("establishment_id")
+  periodStartUtc  DateTime @map("period_start_utc")
+  periodEndUtc    DateTime @map("period_end_utc")
+  sumRating       Float    @map("sum_rating")
+  feedbackCount   Int      @map("feedback_count")
+  averageRating   Float    @map("average_rating")
+  closedAt        DateTime @default(now()) @map("closed_at")
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId, periodEndUtc])
+  @@map("establishment_score_periods")
 }
 
 /** Funcionário vinculado a um estabelecimento (app mobile, permissões restritas). */

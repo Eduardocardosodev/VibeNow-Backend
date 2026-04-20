@@ -32,7 +32,7 @@ const DAY_KEYS = [
 ];
 const TIME_REGEX = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
-function IsOpeningHours(validationOptions?: ValidationOptions) {
+export function IsOpeningHours(validationOptions?: ValidationOptions) {
   return function (object: Object, propertyName: string) {
     registerDecorator({
       name: 'isOpeningHours',
@@ -158,4 +158,10 @@ export class CreateEstablishmentDto {
   @IsObject()
   @IsOpeningHours()
   openingHours?: OpeningHoursMap | null;
+
+  /** IANA (ex.: America/Sao_Paulo). Omisso: padrão do servidor no cadastro. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  operatingTimeZone?: string;
 }

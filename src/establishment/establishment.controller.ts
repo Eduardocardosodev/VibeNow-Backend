@@ -11,12 +11,16 @@ import {
   Query,
   Req,
   UnauthorizedException,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { EstablishmentUsecase } from './usecases/Establishment.usecase';
 import { EstablishmentAccessService } from './services/establishment-access.service';
 import { CreateEstablishmentDto } from './dto/create-establishment.dto';
+import { CreateEstablishmentFormDto } from './dto/create-establishment-form.dto';
 import { CreateEstablishmentEmployeeDto } from './dto/create-establishment-employee.dto';
 import { UpdateEstablishmentDto } from './dto/update-establishment.dto';
 import { UpdateFeedbackRewardDto } from './dto/update-feedback-reward.dto';
@@ -25,6 +29,8 @@ import { NearQueryDto } from './dto/near-query.dto';
 import { MapBoundsQueryDto } from './dto/map-bounds-query.dto';
 import { EstablishmentOwnerGuard } from '../@shared/guards/establishment-owner.guard';
 import { RequireEstablishmentOwner } from '../@shared/decorators/require-establishment-owner.decorator';
+import { establishmentProfileMulterOptions } from './config/establishment-profile-multer.config';
+import { buildEstablishmentProfilePhotoPublicUrl } from './config/establishment-profile-photo-url';
 
 @Controller('establishments')
 export class EstablishmentController {
@@ -36,6 +42,42 @@ export class EstablishmentController {
   @Post()
   create(@Body() createEstablishmentDto: CreateEstablishmentDto) {
     return this.establishmentUsecase.execute(createEstablishmentDto);
+  }
+
+  /**
+   * Multipart: campo `photo` (imagem de perfil) + restantes campos no form.
+   * `openingHours` pode ser JSON string (ex.: {"friday":{"open":"18:00","close":"02:00"}}).
+   * Sem ficheiro: opcional `profilePhoto` como URL (igual ao POST JSON).
+   */
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('photo', establishmentProfileMulterOptions))
+  createUpload(
+    @Req() req: Request,
+    @UploadedFile() photo: Express.Multer.File | undefined,
+    @Body() body: CreateEstablishmentFormDto,
+  ) {
+    const profilePhotoUrl = photo
+      ? buildEstablishmentProfilePhotoPublicUrl(req, photo.filename)
+      : (body.profilePhoto ?? null);
+    const dto: CreateEstablishmentDto = {
+      name: body.name,
+      cnpj: body.cnpj,
+      address: body.address,
+      addressNumber: body.addressNumber,
+      city: body.city,
+      state: body.state,
+      zipCode: body.zipCode,
+      phone: body.phone,
+      email: body.email,
+      instagram: body.instagram,
+      establishmentType: body.establishmentType,
+      profilePhoto: profilePhotoUrl,
+      latitude: body.latitude,
+      longitude: body.longitude,
+      openingHours: body.openingHours,
+      operatingTimeZone: body.operatingTimeZone,
+    };
+    return this.establishmentUsecase.execute(dto);
   }
 
   @Get()

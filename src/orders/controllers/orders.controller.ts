@@ -3,6 +3,8 @@ import {
   Controller,
   Get,
   Headers,
+  Param,
+  ParseIntPipe,
   Post,
   Query,
   Req,
@@ -42,6 +44,22 @@ export class OrdersController {
     );
     res.status(replay ? 200 : 201);
     return order;
+  }
+
+  /**
+   * Detalhe de um pedido do utilizador (itens com subtotal, total, estabelecimento
+   * para mapa/contacto). Só devolve se `orderId` pertencer ao JWT.
+   */
+  @Get('me/:orderId')
+  getMineById(
+    @Req() req: Request,
+    @Param('orderId', ParseIntPipe) orderId: number,
+  ) {
+    const userId = (req as Request & { user?: { id: number } }).user?.id;
+    if (userId == null) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+    return this.ordersUsecase.getMineById(userId, orderId);
   }
 
   /** Histórico de pedidos do utilizador autenticado. */

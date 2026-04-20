@@ -14,6 +14,8 @@ import {
   resolveOrderListPagination,
 } from '../dto/order-list-query.dto';
 import type { OrderStatus } from 'generated/prisma/enums';
+import { isEstablishmentOpen } from 'src/@shared/utils/is-establishment-open';
+import type { OpeningHoursMap } from 'src/establishment/domain/entities/establishment.entity';
 
 function decimalToNumber(value: unknown): number {
   if (typeof value === 'number') return value;
@@ -26,58 +28,19 @@ function decimalToNumber(value: unknown): number {
   return Number(value);
 }
 
-const DAY_KEYS = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-] as const;
-
-/**
- * Verifica se o horário atual cai dentro do intervalo open–close do dia.
- * Suporta horários que cruzam meia-noite (ex: 19:00–02:00).
- */
-function isEstablishmentOpen(
-  openingHours: Record<string, { open: string; close: string } | null> | null,
-  now: Date,
-): boolean {
-  if (!openingHours) return true;
-
-  const todayKey = DAY_KEYS[now.getDay()];
-  const yesterdayKey = DAY_KEYS[(now.getDay() + 6) % 7];
-
-  const todayHours = openingHours[todayKey];
-  const yesterdayHours = openingHours[yesterdayKey];
-
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  if (todayHours) {
-    const [openH, openM] = todayHours.open.split(':').map(Number);
-    const [closeH, closeM] = todayHours.close.split(':').map(Number);
-    const openMin = openH * 60 + openM;
-    const closeMin = closeH * 60 + closeM;
-
-    if (closeMin > openMin) {
-      if (currentMinutes >= openMin && currentMinutes < closeMin) return true;
-    } else {
-      if (currentMinutes >= openMin) return true;
-    }
-  }
-
-  if (yesterdayHours) {
-    const [openH, openM] = yesterdayHours.open.split(':').map(Number);
-    const [closeH, closeM] = yesterdayHours.close.split(':').map(Number);
-    const openMin = openH * 60 + openM;
-    const closeMin = closeH * 60 + closeM;
-
-    if (closeMin <= openMin && currentMinutes < closeMin) return true;
-  }
-
-  return false;
-}
+/** Itens do pedido + foto/descrição do `MenuItem` (URLs em `photoMenuItem`, ver uploads em `menu-items/`). */
+const orderItemsWithMenuSnapshot = {
+  orderBy: { id: 'asc' as const },
+  include: {
+    menuItem: {
+      select: {
+        photoMenuItem: true,
+        description: true,
+        type: true,
+      },
+    },
+  },
+};
 
 export class OrdersUsecase {
   constructor(
@@ -100,9 +63,18 @@ export class OrdersUsecase {
       quantity: number;
       unitPrice: unknown;
       itemName: string;
+      menuItem: {
+        photoMenuItem: string | null;
+        description: string | null;
+        type: string;
+      } | null;
     }>;
     user?: { id: number; name: string; phone: string };
-    establishment?: { id: number; name: string };
+    establishment?: {
+      id: number;
+      name: string;
+      profilePhoto: string | null;
+    };
   }) {
     return {
       id: order.id,
@@ -118,8 +90,86 @@ export class OrdersUsecase {
         quantity: it.quantity,
         unitPrice: decimalToNumber(it.unitPrice),
         itemName: it.itemName,
+        photoMenuItem: it.menuItem?.photoMenuItem ?? null,
+        description: it.menuItem?.description ?? null,
+        type: it.menuItem?.type ?? null,
       })),
       user: order.user,
+      establishment: order.establishment,
+    };
+  }
+
+  /**
+   * Resposta do detalhe do pedido (ecrã tipo app de delivery): linhas com subtotal,
+   * total do pedido e ficha do estabelecimento para contacto / mapa.
+   */
+  private mapOrderDetailRow(order: {
+    id: number;
+    establishmentId: number;
+    userId: number;
+    locationNote: string;
+    status: OrderStatus;
+    idempotencyKey: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    items: Array<{
+      id: number;
+      menuItemId: number | null;
+      quantity: number;
+      unitPrice: unknown;
+      itemName: string;
+      menuItem: {
+        photoMenuItem: string | null;
+        description: string | null;
+        type: string;
+      } | null;
+    }>;
+    establishment: {
+      id: number;
+      name: string;
+      address: string;
+      addressNumber: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      phone: string;
+      profilePhoto: string | null;
+      latitude: number;
+      longitude: number;
+    };
+  }) {
+    const items = order.items.map((it) => {
+      const unitPrice = decimalToNumber(it.unitPrice);
+      const lineTotal = Math.round(unitPrice * it.quantity * 100) / 100;
+      return {
+        id: it.id,
+        menuItemId: it.menuItemId,
+        itemName: it.itemName,
+        quantity: it.quantity,
+        unitPrice,
+        lineTotal,
+        photoMenuItem: it.menuItem?.photoMenuItem ?? null,
+        description: it.menuItem?.description ?? null,
+        type: it.menuItem?.type ?? null,
+      };
+    });
+    const itemsTotal =
+      Math.round(items.reduce((s, it) => s + it.lineTotal, 0) * 100) / 100;
+
+    return {
+      id: order.id,
+      establishmentId: order.establishmentId,
+      userId: order.userId,
+      locationNote: order.locationNote,
+      status: order.status,
+      idempotencyKey: order.idempotencyKey,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      items,
+      summary: {
+        itemsTotal,
+        lineCount: items.length,
+      },
       establishment: order.establishment,
     };
   }
@@ -167,18 +217,21 @@ export class OrdersUsecase {
 
     const establishment = await this.prisma.establishment.findUnique({
       where: { id: dto.establishmentId },
-      select: { openingHours: true },
+      select: { openingHours: true, operatingTimeZone: true },
     });
     if (!establishment) {
       throw new NotFoundException('Estabelecimento não encontrado.');
     }
 
-    const openingHours = establishment.openingHours as Record<
-      string,
-      { open: string; close: string } | null
-    > | null;
+    const openingHours = establishment.openingHours as OpeningHoursMap | null;
 
-    if (!isEstablishmentOpen(openingHours, new Date())) {
+    if (
+      !isEstablishmentOpen(
+        openingHours,
+        new Date(),
+        establishment.operatingTimeZone,
+      )
+    ) {
       throw new BadRequestException(
         'O estabelecimento está fechado no momento. Pedidos só podem ser realizados durante o horário de funcionamento.',
       );
@@ -217,9 +270,11 @@ export class OrdersUsecase {
     const existing = await this.prisma.customerOrder.findFirst({
       where: { userId, idempotencyKey },
       include: {
-        items: true,
+        items: orderItemsWithMenuSnapshot,
         user: { select: { id: true, name: true, phone: true } },
-        establishment: { select: { id: true, name: true } },
+        establishment: {
+          select: { id: true, name: true, profilePhoto: true },
+        },
       },
     });
 
@@ -261,9 +316,11 @@ export class OrdersUsecase {
           },
         },
         include: {
-          items: true,
+          items: orderItemsWithMenuSnapshot,
           user: { select: { id: true, name: true, phone: true } },
-          establishment: { select: { id: true, name: true } },
+          establishment: {
+            select: { id: true, name: true, profilePhoto: true },
+          },
         },
       });
       return { order: this.mapOrderRow(order), replay: false };
@@ -272,9 +329,11 @@ export class OrdersUsecase {
         const raced = await this.prisma.customerOrder.findFirst({
           where: { userId, idempotencyKey },
           include: {
-            items: true,
+            items: orderItemsWithMenuSnapshot,
             user: { select: { id: true, name: true, phone: true } },
-            establishment: { select: { id: true, name: true } },
+            establishment: {
+              select: { id: true, name: true, profilePhoto: true },
+            },
           },
         });
         if (
@@ -319,8 +378,10 @@ export class OrdersUsecase {
         skip,
         take: size,
         include: {
-          items: true,
-          establishment: { select: { id: true, name: true } },
+          items: orderItemsWithMenuSnapshot,
+          establishment: {
+            select: { id: true, name: true, profilePhoto: true },
+          },
         },
       }),
     ]);
@@ -338,6 +399,35 @@ export class OrdersUsecase {
       pageSize: size,
       totalPages,
     };
+  }
+
+  /** Detalhe de um pedido do utilizador (404 se não existir ou for de outro user). */
+  async getMineById(userId: number, orderId: number) {
+    const order = await this.prisma.customerOrder.findFirst({
+      where: { id: orderId, userId },
+      include: {
+        items: orderItemsWithMenuSnapshot,
+        establishment: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            addressNumber: true,
+            city: true,
+            state: true,
+            zipCode: true,
+            phone: true,
+            profilePhoto: true,
+            latitude: true,
+            longitude: true,
+          },
+        },
+      },
+    });
+    if (!order) {
+      throw new NotFoundException('Pedido não encontrado.');
+    }
+    return this.mapOrderDetailRow(order);
   }
 
   async listForEstablishment(
@@ -372,7 +462,7 @@ export class OrdersUsecase {
         skip,
         take: size,
         include: {
-          items: true,
+          items: orderItemsWithMenuSnapshot,
           user: { select: { id: true, name: true, phone: true } },
         },
       }),
@@ -418,9 +508,11 @@ export class OrdersUsecase {
       where: { id: orderId },
       data: { status },
       include: {
-        items: true,
+        items: orderItemsWithMenuSnapshot,
         user: { select: { id: true, name: true, phone: true } },
-        establishment: { select: { id: true, name: true } },
+        establishment: {
+          select: { id: true, name: true, profilePhoto: true },
+        },
       },
     });
 

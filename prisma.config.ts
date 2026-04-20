@@ -12,6 +12,8 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    /** `npx prisma db seed` — logs aparecem no terminal. */
+    seed: 'ts-node --transpile-only prisma/seed.ts',
   },
   engine: 'classic',
   datasource: {

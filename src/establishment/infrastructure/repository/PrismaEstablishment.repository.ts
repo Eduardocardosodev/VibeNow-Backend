@@ -4,6 +4,7 @@ import {
   Establishment,
   OpeningHoursMap,
 } from '../../domain/entities/establishment.entity';
+import { DEFAULT_OPERATING_TIME_ZONE } from 'src/@shared/utils/resolve-operating-period-utc';
 import { IRepositoryEstablishment } from './IRepository.repository';
 import {
   approximateBoundingBoxForRadiusKm,
@@ -28,6 +29,7 @@ type PrismaEstablishmentRow = {
   longitude: number;
   score: number;
   openingHours?: unknown;
+  operatingTimeZone?: string;
   ownerUserId?: number | null;
   feedbackRewardEnabled?: boolean;
   feedbackRewardMessage?: string | null;
@@ -64,6 +66,7 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       row.longitude,
       row.score,
       openingHours,
+      row.operatingTimeZone ?? DEFAULT_OPERATING_TIME_ZONE,
       row.ownerUserId ?? null,
       row.feedbackRewardEnabled ?? false,
       row.feedbackRewardMessage ?? null,
@@ -90,6 +93,7 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       longitude: entity.longitude,
       score: entity.score,
       openingHours: entity.openingHours ?? undefined,
+      operatingTimeZone: entity.operatingTimeZone,
       ownerUserId: entity.ownerUserId ?? undefined,
       feedbackRewardEnabled: entity.feedbackRewardEnabled,
       feedbackRewardMessage: entity.feedbackRewardMessage ?? undefined,
@@ -200,6 +204,7 @@ export class PrismaEstablishmentRepository implements IRepositoryEstablishment {
       longitude: entity.longitude,
       score: entity.score,
       openingHours: entity.openingHours ?? undefined,
+      operatingTimeZone: entity.operatingTimeZone,
       ownerUserId: entity.ownerUserId ?? undefined,
       feedbackRewardEnabled: entity.feedbackRewardEnabled,
       feedbackRewardMessage: entity.feedbackRewardMessage ?? undefined,

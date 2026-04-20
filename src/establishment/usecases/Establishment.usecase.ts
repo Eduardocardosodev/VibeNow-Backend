@@ -10,6 +10,7 @@ import {
 } from '../establishment-map.serializer';
 import { IRepositoryEstablishment } from '../infrastructure/repository/IRepository.repository';
 import { haversineDistanceKm } from '../utils/haversine.util';
+import { DEFAULT_OPERATING_TIME_ZONE } from 'src/@shared/utils/resolve-operating-period-utc';
 
 /** Largura máxima do retângulo (graus) — evita full table scan disfarçado. */
 const MAX_MAP_BOUNDS_SPAN_DEG = 8;
@@ -60,6 +61,7 @@ export class EstablishmentUsecase {
       data.longitude,
       0,
       data.openingHours ?? null,
+      data.operatingTimeZone?.trim() || DEFAULT_OPERATING_TIME_ZONE,
       null,
       false,
       null,
@@ -205,6 +207,10 @@ export class EstablishmentUsecase {
       data.openingHours !== undefined
         ? data.openingHours
         : establishment.openingHours;
+    const operatingTimeZone =
+      data.operatingTimeZone !== undefined
+        ? data.operatingTimeZone.trim()
+        : establishment.operatingTimeZone;
     return await this.establishmentRepository.update(
       new Establishment(
         establishment.id,
@@ -226,6 +232,7 @@ export class EstablishmentUsecase {
         data.longitude ?? establishment.longitude,
         data.score ?? establishment.score,
         openingHours ?? null,
+        operatingTimeZone || DEFAULT_OPERATING_TIME_ZONE,
         establishment.ownerUserId,
         establishment.feedbackRewardEnabled,
         establishment.feedbackRewardMessage,
@@ -284,6 +291,7 @@ export class EstablishmentUsecase {
         establishment.longitude,
         establishment.score,
         establishment.openingHours,
+        establishment.operatingTimeZone,
         establishment.ownerUserId,
         enabled,
         message,
